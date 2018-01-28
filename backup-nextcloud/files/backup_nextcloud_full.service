@@ -1,0 +1,6 @@
+[Unit]
+Description=Execute full Nextcloud backup
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/backup_full

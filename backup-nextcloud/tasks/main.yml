@@ -1,0 +1,57 @@
+- name: copie les fichiers pour l'image backup_nextcloud
+  copy:
+    src: '{{ item }}'
+    dest: /home/{{ ansible_env.SUDO_USER }}/nextcloud
+  with_items:
+  - Dockerfile
+  - backup-db
+  tags: backup-nextcloud
+
+- name: Construction de l'image docker
+  docker_image:
+    name: backup-nextcloud
+    path: /home/{{ ansible_env.SUDO_USER }}/nextcloud/
+    force: yes
+  tags: backup-nextcloud
+
+- name: Installation de duplicity
+  apt:
+    name: duplicity
+    state: present
+  tags: backup-nextcloud
+
+- name: Copie des scripts duplicity
+  copy:
+    src: '{{ item }}'
+    dest: /usr/local/bin
+    mode: 0755
+  with_items:
+  - backup_full
+  - backup_incremental
+  tags: backup-nextcloud
+
+- name: Copie du fichier mot de passe backup
+  copy:
+    src: synology_backup_pwd
+    dest: /root/.synology_backup_pwd
+    mode: 0700
+  tags: backup-nextcloud
+
+# - name: Copie de la tâche cron
+#   copy:
+#     src: cron_backup
+#     dest: /etc/cron.d/nextcloud_backup
+#     mode: 0644
+#   tags: backup-nextcloud
+
+- name: Copie des fichiers timers
+  copy:
+    src: '{{ item }}'
+    dest: /etc/systemd/system/
+  with_items:
+  - backup_nextcloud_full.service
+  - backup_nextcloud_inc.service
+  - backup_nextcloud_full.timer
+  - backup_nextcloud_inc.timer
+  notify: activation des services cron
+  tags: backup-nextcloud

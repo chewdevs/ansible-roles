@@ -1,0 +1,32 @@
+- name: create partition
+  parted:
+    device: "/dev/{{ data_disk }}"
+    number: 1
+    align: optimal
+    state: present
+  tags: disk
+
+- name: create xfs file system
+  filesystem:
+    dev: "/dev/{{ data_disk }}1"
+    fstype: "{{ data_disk_fstype }}"
+  tags: disk
+
+- name: create mount point
+  file:
+    path: "{{ data_disk_mountpoint }}"
+    state: directory
+  tags: disk
+
+- name: mount data disk
+  mount:
+    path: "{{ data_disk_mountpoint }}"
+    src: "/dev/{{ data_disk }}1"
+    fstype: "{{ data_disk_fstype }}"
+    state: mounted
+  tags: disk
+
+- name: set timezone
+  timezone:
+    name: Europe/Paris
+  tags: timezone

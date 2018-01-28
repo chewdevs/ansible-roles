@@ -1,0 +1,95 @@
+version: '3.1'
+
+services:
+  db:
+    image: mariadb
+    deploy:
+      restart_policy:
+        condition: on-failure
+    environment:
+      - MYSQL_ROOT_PASSWORD=/run/secrets/mysql_root_password
+      - MYSQL_DATABASE=nextcloud
+      - MYSQL_USER=nextcloud
+      - MYSQL_PASSWORD=/run/secrets/mysql_nextcloud_password
+    volumes:
+      - db_data:/var/lib/mysql
+    networks:
+      - nextcloud_net
+
+  nextcloud:
+    image: nextcloud
+    deploy:
+      restart_policy:
+        condition: on-failure
+    environment:
+      - MYSQL_HOST=db
+      - MYSQL_DATABASE=nextcloud
+      - MYSQL_USER=nextcloud
+      - MYSQL_PASSWORD=/run/secrets/mysql_nextcloud_password
+      - VIRTUAL_HOST=cloud.chews.fr
+      - LETSENCRYPT_HOST=cloud.chews.fr
+      - LETSENCRYPT_EMAIL=perrin.laurent@gmail.com
+    volumes:
+      - nextcloud_data:/var/www/html
+    networks:
+      - nextcloud_net
+
+  rp:
+    image: jwilder/nginx-proxy
+    deploy:
+      restart_policy:
+        condition: on-failure
+    volumes:
+      - certs:/etc/nginx/certs:ro
+      - nginx_vhost:/etc/nginx/vhost.d
+      - nginx_html:/usr/share/nginx/html
+      - ./upload_size.conf:/etc/nginx/conf.d/upload_size.conf
+      - /var/run/docker.sock:/tmp/docker.sock:ro
+    labels:
+      - com.github.jrcs.letsencrypt_nginx_proxy_companion.nginx_proxy
+    ports:
+      - "80:80"
+      - "443:443"
+    networks:
+      - nextcloud_net
+
+  letsencrypt_companion:
+    image: jrcs/letsencrypt-nginx-proxy-companion
+    volumes:
+      - certs:/etc/nginx/certs:rw
+      - nginx_vhost:/etc/nginx/vhost.d
+      - nginx_html:/usr/share/nginx/html
+      - /var/run/docker.sock:/var/run/docker.sock
+    networks:
+      - nextcloud_net
+
+  backup:
+    image: backup-nextcloud:latest
+    deploy:
+      restart_policy:
+        condition: on-failure
+    volumes:
+      - backup:/var/backups
+      - /etc/localtime:/etc/localtime:ro
+    environment:
+      - MYSQL_ROOT_PASSWORD=/run/secrets/mysql_root_password
+    networks:
+      - nextcloud_net
+
+networks:
+  nextcloud_net:
+
+volumes:
+  db_data:
+  nextcloud_data:
+  nginx_vhost:
+  nginx_html:
+  certs:
+  db_backup:
+  backup:
+
+secrets:
+  mysql_root_password:
+    external: true
+  mysql_nextcloud_password:
+    external: true

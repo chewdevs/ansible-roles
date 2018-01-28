@@ -1,0 +1,57 @@
+- name: remove old docker
+  apt:
+    name:
+    - docker-engine
+    - docker.io
+    state: absent
+  tags: docker,docker-pkg
+
+- name: add docker key
+  apt_key:
+    url: https://download.docker.com/linux/ubuntu/gpg
+    state: present
+  tags: docker,docker-pkg
+
+- name: add docker repository
+  apt_repository:
+    repo: "deb [arch=amd64] https://download.docker.com/linux/ubuntu {{ ansible_distribution_release }} stable"
+    state: present
+  tags: docker,docker-bin
+
+- name: install docker and pip
+  apt:
+    name:
+    - docker-ce
+    - python-pip
+    update_cache: yes
+    state: present
+  tags: docker,docker-bin
+
+- name: install docker-compose with pip
+  pip:
+    name: docker-compose
+    state: present
+  tags: docker,docker-bin
+
+- name: create docker group
+  group:
+    name: docker
+    state: present
+  tags: docker,docker-user
+
+- name: add user to docker group
+  user:
+    name: "{{ ansible_env.SUDO_USER }}"
+    groups: docker
+    append: yes
+  tags: docker,docker-user
+
+- name: check docker info
+  command: docker info
+  register: docker_info
+  tags: docker,swarm
+
+- name: init swarm
+  command: docker swarm init
+  when: "docker_info.stdout.find('Swarm: active') == -1"
+  tags: docker,swarm

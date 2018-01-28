@@ -1,0 +1,16 @@
+#!/bin/bash
+
+docker stack rm nextcloud
+
+while docker ps |grep nextcloud
+do
+  echo waiting for container deletion
+done
+
+. /root/.synology_backup_pwd
+
+duplicity full --ssl-no-check-certificate --no-encryption --include="/var/lib/docker/volumes/nextcloud_backup" --include="/var/lib/docker/volumes/nextcloud_nextcloud_data"  --exclude="**"  /var/lib/docker/volumes  webdavs://Backup:GUnPsp0V3S5u7Dyk@thunderbluff.chews.fr:5006/Backup/Nextcloud >> /var/log/nextcloud_backup.log
+
+duplicity remove-all-but-n-full 3 --force --ssl-no-check-certificate webdavs://Backup:GUnPsp0V3S5u7Dyk@thunderbluff.chews.fr:5006/Backup/Nextcloud >> /var/log/nextcloud_backup.log
+
+docker stack deploy -c /home/ubuntu/nextcloud/docker-compose.yml nextcloud

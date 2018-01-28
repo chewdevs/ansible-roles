@@ -1,0 +1,5 @@
+# Daily incremental backup
+5 2 * * 1,2,3,4,5,6 ubuntu sudo /usr/local/bin/backup_incremental
+
+# Weekly full backup
+5 2 * * 7 ubuntu sudo /usr/local/bin/backup_full

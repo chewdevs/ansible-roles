@@ -1,0 +1,2 @@
+data_disk: sdb
+data_disk_fstype: xfs

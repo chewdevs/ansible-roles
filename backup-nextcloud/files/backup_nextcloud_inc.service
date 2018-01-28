@@ -1,0 +1,6 @@
+[Unit]
+Description=Execute incremental Nextcloud backup
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/backup_incremental

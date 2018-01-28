@@ -1,0 +1,5 @@
+[Unit]
+Description=Run backup_nextcloud_inc.service every day at 2h05
+
+[Timer]
+OnCalendar=Sun *-*-* 02:05:00

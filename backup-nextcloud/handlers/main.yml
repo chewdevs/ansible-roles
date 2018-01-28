@@ -1,0 +1,7 @@
+- name: activation des services cron
+  service:
+    name: "{{ item }}"
+    state: started
+  with_items:
+    - backup_nextcloud_full.timer
+    - backup_nextcloud_inc.timer

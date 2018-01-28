@@ -1,0 +1,29 @@
+- name: create mysql_root_password docker secret
+  docker_secret:
+    name: mysql_root_password
+    data: "{{ mysql_root_password }}"
+    state: present
+  tags: docker-nextcloud
+
+- name: create mysql_nextcloud_password docker secret
+  docker_secret:
+    name: mysql_nextcloud_password
+    data: "{{ mysql_nextcloud_password }}"
+    state: present
+  tags: docker-nextcloud
+
+- name: create nextcloud directory
+  file:
+    path: /home/{{ ansible_env.SUDO_USER }}/nextcloud
+    state: directory
+  tags: docker-nextcloud
+
+- name: copy nexctloud docker files
+  copy:
+    src: '{{ item }}'
+    dest: /home/{{ ansible_env.SUDO_USER }}/nextcloud
+  with_items:
+  - docker-compose.yml
+  - proxy.conf
+  - upload_size.conf
+  tags: docker-nextcloud
